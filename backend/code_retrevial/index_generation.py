@@ -6,7 +6,7 @@ from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
 
-SNIPPETS_FILE = Path("..") / "cleaned_snippets.jsonl"
+SNIPPETS_FILE = Path("..") / "snippets.jsonl"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 BATCH_SIZE = 32
 TOP_K = 5

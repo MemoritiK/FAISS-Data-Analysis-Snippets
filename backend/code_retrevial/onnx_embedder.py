@@ -35,10 +35,9 @@ def embed_text(text: str) -> np.ndarray:
     if pad_len > 0:
         input_ids += [0] * pad_len
         attention_mask += [0] * pad_len
-
     ort_inputs = {
         "input_ids": np.array([input_ids], dtype=np.int64),
-        "attention_mask": np.array([attention_mask], dtype=np.int64),
+        "attention_mask": np.array([attention_mask], dtype=np.int64)
     }
 
     outputs = session.run(None, ort_inputs)

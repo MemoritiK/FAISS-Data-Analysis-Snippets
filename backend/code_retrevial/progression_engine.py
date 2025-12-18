@@ -1,14 +1,12 @@
-from onnx_embedder import embed_text
+from .onnx_embedder import embed_text
 from pathlib import Path
 import faiss
 import numpy as np
-import json
-
-SNIPPETS_FILE = Path("..") /"cleaned_snippets.jsonl"
-TOP_K=3
+import pickle
 
 INDEX_DIR = Path("faiss_indices")
-snippets = [json.loads(line) for line in open(SNIPPETS_FILE, "r", encoding="utf-8")]
+with open(f"{INDEX_DIR}/metadata.pkl", "rb") as f:
+    snippets = pickle.load(f)
 
 def get_index(index_path):
     embeddings_path = index_path.with_suffix(".npy")
@@ -22,16 +20,15 @@ index_code, _ = get_index(INDEX_DIR / "code.index")
 index_tags, _ = get_index(INDEX_DIR / "tags.index")
 
 def detect_mode(text):
-    if text.count(",") >= 2 and len(text.split()) < 4:
-        return 3
 
     code_tokens = ["def ", "class ", "{", "}", "};", "==", "->", "#include", "import ", "for(", "while(",":","[","]"]
     if any(tok in text for tok in code_tokens):
         return 2
-
+    if text.count(",") >= 2 and len(text.split()) < 5:
+        return 3
     return 1
 
-def search_snippets(input_text, top_k=TOP_K, difficulty="all"):
+def search_snippets(input_text, top_k, difficulty="all"):
     """
     Search snippets by mode and optional difficulty.
     mode: 1=query, 2=code, 3=tags
@@ -76,7 +73,7 @@ if __name__ == "__main__":
     results = search_snippets(query_text, top_k=3)
     
     for r in results:
-        print(f"Category: {r['category']}, Score: {r['score']:.3f}")
+        print(f"Category: {r['core_category']}, Score: {r['score']:.3f}")
         print(f"Question: {r['question']}")
         print("Difficulty:", r["difficulty"])
         print("Code:\n", r['code'].replace("\\n", "\n"))
