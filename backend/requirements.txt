@@ -10,4 +10,4 @@ requests
 pyyaml
 tqdm
 tokenizers
-faiss
+faiss-cpu
