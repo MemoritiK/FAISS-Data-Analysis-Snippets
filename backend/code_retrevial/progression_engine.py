@@ -1,4 +1,4 @@
-from onnx_embedder import embed_text
+from .onnx_embedder import embed_text
 from pathlib import Path
 import faiss
 import numpy as np
