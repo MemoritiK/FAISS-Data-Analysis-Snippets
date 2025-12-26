@@ -4,7 +4,7 @@ import faiss
 import pickle
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
-
+from onnx_embedder import embed_text
 
 SNIPPETS_FILE = Path("..") / "snippets.jsonl"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
@@ -30,8 +30,7 @@ def build_index(texts, index_path):
     else:
         # Generate embeddings and create FAISS index
         print(f"Generating embeddings for {len(texts)} items...")
-        q_embeddings = model.encode(texts, convert_to_numpy=True, batch_size=BATCH_SIZE, show_progress_bar=True)
-        q_embeddings = q_embeddings / np.linalg.norm(q_embeddings, axis=1, keepdims=True)
+        q_embeddings = embed_text(texts)
         
         d = q_embeddings.shape[1]
         index = faiss.IndexFlatIP(d)  # cosine similarity
@@ -42,9 +41,36 @@ def build_index(texts, index_path):
         print(f"Saved index to {index_path} and embeddings to {embeddings_path}")
     return index, q_embeddings
 
+def split_into_3_parts(text: str):
+    words = text.split()
+    n = len(words)
+
+    k = n // 3
+    r = n % 3
+
+    sizes = [
+        k + (1 if r > 0 else 0),
+        k + (1 if r > 1 else 0),
+        k
+    ]
+
+    parts = []
+    start = 0
+    for size in sizes:
+        end = start + size
+        parts.append(" ".join(words[start:end]))
+        start = end
+
+    return parts
 
 texts_query = [s.get("question", "") for s in snippets]
-texts_code = [s.get("code", "") for s in snippets]
+code = [s.get("code", "") for s in snippets]
+texts_code = []
+
+for sth in code:
+    n = split_into_3_parts(sth)
+    texts_code += n
+
 texts_tags = [" ".join(s.get("tags", [])) for s in snippets]
 
 index_query, _ = build_index(texts_query, INDEX_DIR / "query.index")

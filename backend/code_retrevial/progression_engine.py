@@ -1,4 +1,4 @@
-from .onnx_embedder import embed_text
+from onnx_embedder import embed_text
 from pathlib import Path
 import faiss
 import numpy as np
@@ -50,10 +50,16 @@ def search_snippets(input_text, top_k, difficulty="all"):
     D, I = index.search(q_emb, top_k)
     
     results = []
-    for idx, score in zip(I[0], D[0]):
-        snippet = snippets[idx].copy()
-        snippet["score"] = float(score)
-        results.append(snippet)
+    if mode!=2:
+        for idx, score in zip(I[0], D[0]):
+            snippet = snippets[idx].copy()
+            snippet["score"] = float(score)
+            results.append(snippet)
+    else:
+        for idx, score in zip(I[0], D[0]):
+            snippet = snippets[idx//3].copy()
+            snippet["score"] = float(score)
+            results.append(snippet)
     
     if difficulty != "all":
         results = [r for r in results if r.get("difficulty") == difficulty]
@@ -62,14 +68,7 @@ def search_snippets(input_text, top_k, difficulty="all"):
 
 
 if __name__ == "__main__":    
-    query_text = '''df = pd.DataFrame({ 
-        "A": [1, 2, None, 4],
-        "B": [None, 2, 3, 4],
-        "C": ["x", None, "y", "z"]
-    })
-    
-    # Drop rows with any NaN
-    df_clean = df.drop"'''
+    query_text = '''df_clean = df.drop"'''
     results = search_snippets(query_text, top_k=3)
     
     for r in results:
